@@ -231,8 +231,8 @@ class http_event_collector:
             if self.popNullFields:
                 payloadEvent = payload.get('event')
                 payloadEvent = {k:payloadEvent.get(k) for k,v in payloadEvent.items() if v}
-                payload.update({"event":payloadEvent})
-            payloadString = json.dumps(payload, default=str)
+                payload.update({"event":payloadEvent})            
+            payloadString = json.dumps(payload, ensure_ascii=False, default=str)
 
         else:
             payloadString = str(payload)
@@ -259,7 +259,9 @@ class http_event_collector:
             headers = {'Authorization':'Splunk '+self.token, 'X-Splunk-Request-Channel':str(uuid.uuid1())}
             # try to post payload twice then give up and move on
             try:
-                response = self.requests_retry_session().post(self.server_uri, data=payload, headers=headers, verify=self.SSL_verify)
+                response = self.requests_retry_session().post(
+                    self.server_uri, data=payload.encode("utf-8"), headers=headers, verify=self.SSL_verify
+                )
                 self.log.debug("batch_thread: http_status_code=%s http_message=%s",response.status_code,response.text)
             except Exception as e:
                 self.log.exception(e)
